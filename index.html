@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Tri Ân Thầy Giáo - Chào Mừng Ngày Nhà Giáo Việt Nam 20/11</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Dancing Script & Cormorant Garamond -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Dancing+Script:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-espresso: #14110f;
+            --bg-card: #1d1815;
+            --bg-parchment: #241e1a;
+            --gold-primary: #d4af37;
+            --gold-light: #f3e5ab;
+            --gold-bronze: #b87333;
+            --text-ivory: #f7f1e3;
+            --text-muted: #c8b9a6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+            background: radial-gradient(circle at 50% 35%, #2a211b 0%, #14110f 70%, #0b0908 100%);
+            color: var(--text-ivory);
+            font-family: 'Dancing Script', cursive;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Canvas nền chòm sao tri thức & bụi vàng */
+        #constellation-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Lớp phủ ánh sáng ấm áp */
+        .ambient-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90vw;
+            height: 90vh;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, rgba(184, 115, 51, 0.03) 45%, transparent 70%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Container chính */
+        .main-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(12px, 3vw, 28px);
+        }
+
+        /* Màn hình phong bì mở đầu */
+        .envelope-stage {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+
+        .envelope-stage.hidden-stage {
+            opacity: 0;
+            transform: scale(0.95) translateY(-20px);
+            pointer-events: none;
+            position: absolute;
+        }
+
+        .envelope-box {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            max-height: 300px;
+            background: linear-gradient(145deg, #2b221c, #181310);
+            border: 1.5px solid rgba(212, 175, 55, 0.45);
+            border-radius: 16px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), inset 0 0 30px rgba(212, 175, 55, 0.08);
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease, border-color 0.4s ease;
+        }
+
+        .envelope-box:hover, .envelope-box:active {
+            transform: translateY(-4px);
+            border-color: var(--gold-primary);
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.85), 0 0 25px rgba(212, 175, 55, 0.25);
+        }
+
+        /* Nếp gấp phong bì trang trí */
+        .envelope-flap-lines {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        /* Con dấu sáp vàng đồng */
+        .wax-seal {
+            width: clamp(64px, 16vw, 82px);
+            height: clamp(64px, 16vw, 82px);
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #f3d06b, #c59328 60%, #8a5a10 100%);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.65), inset 0 2px 4px rgba(255, 255, 255, 0.45), inset 0 -3px 6px rgba(60, 35, 5, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #fce79c;
+            position: relative;
+            z-index: 2;
+            animation: pulseSeal 2.8s infinite ease-in-out;
+        }
+
+        @keyframes pulseSeal {
+            0%, 100% { transform: scale(1); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.65), 0 0 0 0 rgba(212, 175, 55, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 12px 26px rgba(0, 0, 0, 0.75), 0 0 0 12px rgba(212, 175, 55, 0); }
+        }
+
+        /* Khung thiệp chính */
+        .card-container {
+            width: 100%;
+            max-width: 720px;
+            background: linear-gradient(165deg, rgba(36, 29, 24, 0.96) 0%, rgba(22, 18, 15, 0.98) 100%);
+            border: 1.5px solid rgba(212, 175, 55, 0.45);
+            border-radius: 20px;
+            padding: clamp(20px, 5vw, 44px) clamp(18px, 5vw, 48px);
+            box-shadow: 
+                0 25px 70px rgba(0, 0, 0, 0.8),
+                inset 0 0 0 6px rgba(29, 24, 21, 0.9),
+                inset 0 0 0 7px rgba(212, 175, 55, 0.25);
+            position: relative;
+            opacity: 0;
+            transform: translateY(25px) scale(0.97);
+            pointer-events: none;
+            transition: opacity 0.85s ease, transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+            display: none;
+        }
+
+        .card-container.visible-card {
+            display: block;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        /* Hoa văn góc cổ điển */
+        .corner-ornament {
+            position: absolute;
+            width: clamp(28px, 6vw, 46px);
+            height: clamp(28px, 6vw, 46px);
+            pointer-events: none;
+            opacity: 0.75;
+        }
+        .corner-tl { top: 12px; left: 12px; }
+        .corner-tr { top: 12px; right: 12px; transform: scaleX(-1); }
+        .corner-bl { bottom: 12px; left: 12px; transform: scaleY(-1); }
+        .corner-br { bottom: 12px; right: 12px; transform: scale(-1, -1); }
+
+        /* Typography tự động co giãn hoàn hảo trên mọi điện thoại */
+        .subtitle-badge {
+            font-family: 'Cormorant Garamond', serif;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            font-size: clamp(0.72rem, 2.3vw, 0.9rem);
+            color: var(--gold-primary);
+        }
+
+        .main-title {
+            font-family: 'Dancing Script', cursive;
+            font-weight: 700;
+            font-size: clamp(2rem, 6.8vw, 3.35rem);
+            line-height: 1.22;
+            background: linear-gradient(135deg, #fff3c4 0%, #d4af37 50%, #b87333 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 18px rgba(212, 175, 55, 0.18);
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* Vùng nội dung viết tay từng ký tự */
+        .handwriting-area {
+            font-family: 'Dancing Script', cursive;
+            font-size: clamp(1.32rem, 4.4vw, 1.85rem);
+            line-height: 1.65;
+            color: var(--text-ivory);
+            text-align: left;
+            min-height: clamp(210px, 38vh, 290px);
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .greeting-salutation {
+            color: var(--gold-light);
+            font-weight: 700;
+            font-size: clamp(1.48rem, 4.9vw, 2.05rem);
+            display: block;
+            margin-bottom: 0.45em;
+        }
+
+        .message-paragraph {
+            display: block;
+            margin-bottom: 0.65em;
+        }
+
+        .signature-block {
+            display: block;
+            text-align: right;
+            margin-top: 0.8em;
+            color: var(--gold-primary);
+            font-weight: 600;
+            font-size: clamp(1.38rem, 4.5vw, 1.9rem);
+        }
+
+        /* Hiệu ứng từng ký tự viết tay mượt mà */
+        .char-span {
+            display: inline;
+            opacity: 0;
+            animation: inkAppear 0.28s ease forwards;
+        }
+
+        @keyframes inkAppear {
+            0% {
+                opacity: 0;
+                filter: blur(2px);
+                color: #ffd700;
+            }
+            100% {
+                opacity: 1;
+                filter: blur(0);
+            }
+        }
+
+        /* Thanh điều khiển tinh tế */
+        .controls-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: clamp(18px, 4vw, 28px);
+            padding-top: 16px;
+            border-top: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .gold-btn {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            font-size: clamp(0.88rem, 2.8vw, 1rem);
+            letter-spacing: 0.04em;
+            color: var(--gold-light);
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.45);
+            border-radius: 999px;
+            padding: 9px 18px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            transition: all 0.25s ease;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .gold-btn:hover, .gold-btn:active {
+            background: rgba(212, 175, 55, 0.24);
+            border-color: var(--gold-primary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+        }
+
+        .gold-btn.active-primary {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.3), rgba(184, 115, 51, 0.3));
+            border-color: var(--gold-primary);
+            color: #fff6d6;
+        }
+
+        /* Modal tùy chỉnh lời chúc (nếu người dùng muốn đổi tên thầy / lời chúc) */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 8, 7, 0.85);
+            backdrop-filter: blur(6px);
+            z-index: 50;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .modal-box {
+            width: 100%;
+            max-width: 480px;
+            background: #1f1916;
+            border: 1px solid rgba(212, 175, 55, 0.5);
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+            font-family: 'Cormorant Garamond', serif;
+        }
+
+        .modal-input, .modal-textarea {
+            width: 100%;
+            background: #14100e;
+            border: 1px solid rgba(212, 175, 55, 0.35);
+            border-radius: 10px;
+            padding: 10px 12px;
+            color: var(--text-ivory);
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.25rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .modal-input:focus, .modal-textarea:focus {
+            border-color: var(--gold-primary);
+        }
+
+        /* Tối ưu riêng cho màn hình điện thoại rất nhỏ (< 360px) */
+        @media (max-width: 360px) {
+            .card-container {
+                padding: 16px 14px;
+                border-radius: 16px;
+            }
+            .handwriting-area {
+                font-size: 1.22rem;
+                line-height: 1.55;
+            }
+            .gold-btn {
+                padding: 8px 13px;
+                font-size: 0.84rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hiệu ứng nền Canvas: Chòm sao tri thức & Bụi vàng lấp lánh -->
+    <canvas id="constellation-canvas"></canvas>
+    <div class="ambient-glow"></div>
+
+    <main class="main-wrapper">
+        
+        <!-- BƯỚC 1: PHONG BÌ NIÊM PHONG CON DẤU VÀNG ĐỒNG -->
+        <section id="envelope-stage" class="envelope-stage" aria-label="Phong bì thiệp chúc mừng 20-11">
+            <p class="subtitle-badge mb-3">Ngày Nhà Giáo Việt Nam 20 • 11</p>
+            <h1 class="main-title mb-6 px-2">Tấm Lòng Tri Ân Kính Gửi Thầy</h1>
+
+            <div id="open-envelope-btn" class="envelope-box" role="button" tabindex="0" aria-label="Chạm để mở thiệp">
+                <!-- Đường nét hình học phong bì -->
+                <svg class="envelope-flap-lines" viewBox="0 0 400 250" preserveAspectRatio="none">
+                    <path d="M 0 0 L 200 135 L 400 0" fill="none" stroke="rgba(212, 175, 55, 0.35)" stroke-width="1.5"/>
+                    <path d="M 0 250 L 145 110 M 400 250 L 255 110" fill="none" stroke="rgba(212, 175, 55, 0.2)" stroke-width="1"/>
+                    <rect x="10" y="10" width="380" height="230" rx="10" fill="none" stroke="rgba(212, 175, 55, 0.22)" stroke-width="1" stroke-dasharray="4 4"/>
+                </svg>
+
+                <!-- Con dấu sáp vàng -->
+                <div class="wax-seal">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2c1d05" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                        <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+                        <path d="M2 2l7.586 7.586"></path>
+                        <circle cx="11" cy="11" r="2"></circle>
+                    </svg>
+                </div>
+
+                <p class="mt-4 text-xl sm:text-2xl text-[#f3e5ab] tracking-wide relative z-10">
+                    Chạm để mở thiệp chúc mừng
+                </p>
+            </div>
+        </section>
+
+        <!-- BƯỚC 2: NỘI DUNG THIỆP CHÚC MỪNG -->
+        <article id="card-container" class="card-container" aria-live="polite">
+            <!-- 4 góc hoa văn cổ điển -->
+            <svg class="corner-ornament corner-tl" viewBox="0 0 50 50" fill="none">
+                <path d="M2 48V14C2 7.37258 7.37258 2 14 2H48" stroke="#d4af37" stroke-width="2"/>
+                <path d="M8 42V18C8 12.4772 12.4772 8 18 8H42" stroke="#b87333" stroke-width="1"/>
+                <circle cx="14" cy="14" r="2.5" fill="#d4af37"/>
+            </svg>
+            <svg class="corner-ornament corner-tr" viewBox="0 0 50 50" fill="none">
+                <path d="M2 48V14C2 7.37258 7.37258 2 14 2H48" stroke="#d4af37" stroke-width="2"/>
+                <path d="M8 42V18C8 12.4772 12.4772 8 18 8H42" stroke="#b87333" stroke-width="1"/>
+                <circle cx="14" cy="14" r="2.5" fill="#d4af37"/>
+            </svg>
+            <svg class="corner-ornament corner-bl" viewBox="0 0 50 50" fill="none">
+                <path d="M2 48V14C2 7.37258 7.37258 2 14 2H48" stroke="#d4af37" stroke-width="2"/>
+                <path d="M8 42V18C8 12.4772 12.4772 8 18 8H42" stroke="#b87333" stroke-width="1"/>
+                <circle cx="14" cy="14" r="2.5" fill="#d4af37"/>
+            </svg>
+            <svg class="corner-ornament corner-br" viewBox="0 0 50 50" fill="none">
+                <path d="M2 48V14C2 7.37258 7.37258 2 14 2H48" stroke="#d4af37" stroke-width="2"/>
+                <path d="M8 42V18C8 12.4772 12.4772 8 18 8H42" stroke="#b87333" stroke-width="1"/>
+                <circle cx="14" cy="14" r="2.5" fill="#d4af37"/>
+            </svg>
+
+            <!-- Phần đầu thiệp -->
+            <header class="text-center mb-4 sm:mb-6">
+                <div class="inline-flex items-center justify-center gap-2 mb-1">
+                    <span class="h-[1px] w-6 sm:w-10 bg-gradient-to-r from-transparent to-[#d4af37]"></span>
+                    <span class="subtitle-badge">Chào Mừng Ngày Nhà Giáo Việt Nam 20/11</span>
+                    <span class="h-[1px] w-6 sm:w-10 bg-gradient-to-l from-transparent to-[#d4af37]"></span>
+                </div>
+                <h2 class="main-title">Kính Chúc Thầy</h2>
+            </header>
+
+            <!-- Đường phân cách tinh tế -->
+            <div class="flex items-center justify-center my-3 sm:my-4 opacity-70">
+                <div class="h-[1px] flex-1 bg-gradient-to-r from-transparent via-[#d4af37] to-transparent"></div>
+                <svg class="mx-3 w-5 h-5 text-[#d4af37]" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L14.8 8.8L22 9.5L16.5 14.2L18.2 21.3L12 17.5L5.8 21.3L7.5 14.2L2 9.5L9.2 8.8L12 2Z"/>
+                </svg>
+                <div class="h-[1px] flex-1 bg-gradient-to-r from-transparent via-[#d4af37] to-transparent"></div>
+            </div>
+
+            <!-- Vùng hiển thị hiệu ứng chữ viết tay từng ký tự -->
+            <div id="handwriting-area" class="handwriting-area"></div>
+
+            <!-- Thanh nút điều khiển -->
+            <footer class="controls-bar">
+                <button id="replay-btn" class="gold-btn" type="button" title="Viết lại lời chúc">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                        <path d="M3 3v5h5"></path>
+                    </svg>
+                    <span>Viết lại</span>
+                </button>
+
+                <button id="edit-btn" class="gold-btn" type="button" title="Tùy chỉnh tên thầy và lời chúc">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                    </svg>
+                    <span>Sửa lời chúc</span>
+                </button>
+            </footer>
+        </article>
+    </main>
+
+    <!-- Hộp thoại tùy chỉnh lời chúc -->
+    <div id="edit-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-box">
+            <h3 id="modal-title" class="text-2xl text-[#f3e5ab] font-bold mb-3" style="font-family: 'Dancing Script', cursive;">
+                Tùy chỉnh lời chúc gửi Thầy
+            </h3>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm text-[#c8b9a6] mb-1">Lời xưng hô:</label>
+                    <input id="input-salutation" type="text" class="modal-input" value="Kính gửi Thầy kính mến,">
+                </div>
+                <div>
+                    <label class="block text-sm text-[#c8b9a6] mb-1">Nội dung lời chúc:</label>
+                    <textarea id="input-body" rows="4" class="modal-textarea">Nhân ngày Nhà giáo Việt Nam 20/11, em xin gửi tới Thầy lời chúc sức khỏe, bình an và luôn giữ vững ngọn lửa nhiệt huyết trên hành trình gieo mầm tri thức. Cảm ơn Thầy đã luôn tận tâm dẫn dắt, truyền cảm hứng và định hướng cho chúng em vững bước trưởng thành.</textarea>
+                </div>
+                <div>
+                    <label class="block text-sm text-[#c8b9a6] mb-1">Chữ ký người gửi:</label>
+                    <input id="input-signature" type="text" class="modal-input" value="Học trò của Thầy">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-5">
+                <button id="close-modal-btn" type="button" class="gold-btn">Hủy</button>
+                <button id="save-modal-btn" type="button" class="gold-btn active-primary">Áp dụng & Viết chữ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * 1. HIỆU ỨNG NỀN CANVAS: CHÒM SAO TRI THỨC & BỤI VÀNG LẤP LÁNH
+         * Thay thế hoa rơi bằng mạng lưới ánh sáng vàng kim hình học & các đốm sáng bay lên
+         */
+        const canvas = document.getElementById('constellation-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width = 0;
+        let height = 0;
+        let particles = [];
+        let embers = [];
+        let pointer = { x: -9999, y: -9999 };
+
+        // Bảng màu vàng kim, đồng ấm áp (tuyệt đối không có xanh dương hay hồng)
+        const goldPalette = [
+            'rgba(212, 175, 55, ',   // Gold
+            'rgba(243, 229, 171, ',  // Champagne / Parchment gold
+            'rgba(184, 115, 51, ',   // Bronze / Copper
+            'rgba(230, 168, 70, '    // Warm Amber
+        ];
+
+        function resizeCanvas() {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            initParticles();
+        }
+
+        function initParticles() {
+            particles = [];
+            embers = [];
+            // Tự động điều chỉnh mật độ hạt theo kích thước màn hình (điện thoại vs máy tính)
+            const area = width * height;
+            const nodeCount = Math.min(Math.max(Math.floor(area / 22000), 22), 55);
+            const emberCount = Math.min(Math.max(Math.floor(area / 18000), 25), 60);
+
+            for (let i = 0; i < nodeCount; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 0.35,
+                    vy: (Math.random() - 0.5) * 0.35,
+                    radius: Math.random() * 1.8 + 1.2,
+                    colorBase: goldPalette[Math.floor(Math.random() * goldPalette.length)],
+                    pulse: Math.random() * Math.PI * 2
+                });
+            }
+
+            for (let i = 0; i < emberCount; i++) {
+                embers.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vy: -(Math.random() * 0.45 + 0.15),
+                    vx: (Math.random() - 0.5) * 0.25,
+                    size: Math.random() * 2.2 + 0.8,
+                    alpha: Math.random() * 0.6 + 0.2,
+                    phase: Math.random() * Math.PI * 2,
+                    colorBase: goldPalette[Math.floor(Math.random() * goldPalette.length)]
+                });
+            }
+        }
+
+        function animateBackground() {
+            ctx.clearRect(0, 0, width, height);
+
+            const connectionDist = width < 600 ? 110 : 155;
+
+            // Vẽ các hạt bụi vàng bay lên nhẹ nhàng (Golden Dust)
+            for (let i = 0; i < embers.length; i++) {
+                const e = embers[i];
+                e.y += e.vy;
+                e.x += e.vx + Math.sin(e.phase) * 0.15;
+                e.phase += 0.02;
+
+                if (e.y < -10) {
+                    e.y = height + 10;
+                    e.x = Math.random() * width;
+                }
+                if (e.x < -10) e.x = width + 10;
+                if (e.x > width + 10) e.x = -10;
+
+                const twinkle = 0.5 + 0.5 * Math.sin(e.phase * 1.5);
+                ctx.beginPath();
+                ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2);
+                ctx.fillStyle = e.colorBase + (e.alpha * twinkle).toFixed(2) + ')';
+                ctx.fill();
+            }
+
+            // Cập nhật và vẽ mạng lưới chòm sao tri thức
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.pulse += 0.03;
+
+                if (p.x < 0 || p.x > width) p.vx *= -1;
+                if (p.y < 0 || p.y > height) p.vy *= -1;
+
+                // Tương tác nhẹ với con trỏ chuột hoặc chạm tay
+                const dxMouse = pointer.x - p.x;
+                const dyMouse = pointer.y - p.y;
+                const distMouse = Math.hypot(dxMouse, dyMouse);
+                if (distMouse < 140) {
+                    p.x -= dxMouse * 0.008;
+                    p.y -= dyMouse * 0.008;
+                }
+
+                // Kết nối các điểm gần nhau tạo thành hình học chòm sao
+                for (let j = i + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    if (dist < connectionDist) {
+                        const lineAlpha = (1 - dist / connectionDist) * 0.24;
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = `rgba(212, 175, 55, ${lineAlpha.toFixed(3)})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.stroke();
+                    }
+                }
+
+                // Vẽ nút sáng vàng kim
+                const glowAlpha = 0.45 + 0.45 * Math.sin(p.pulse);
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.colorBase + glowAlpha.toFixed(2) + ')';
+                ctx.fill();
+            }
+
+            requestAnimationFrame(animateBackground);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('mousemove', (e) => {
+            pointer.x = e.clientX;
+            pointer.y = e.clientY;
+        });
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                pointer.x = e.touches[0].clientX;
+                pointer.y = e.touches[0].clientY;
+            }
+        }, { passive: true });
+        window.addEventListener('touchend', () => {
+            pointer.x = -9999;
+            pointer.y = -9999;
+        });
+
+        /**
+         * 2. HIỆU ỨNG VIẾT TAY TỪNG KÝ TỰ (HANDWRITING CHARACTER REVEAL)
+         * Đảm bảo không cắt chữ, tự động xuống dòng chuẩn xác trên mọi kích thước điện thoại
+         */
+        let cardData = {
+            salutation: "Kính gửi Thầy kính mến,",
+            body: "Nhân ngày Nhà giáo Việt Nam 20/11, em xin gửi tới Thầy lời chúc sức khỏe, bình an và luôn giữ vững ngọn lửa nhiệt huyết trên hành trình gieo mầm tri thức. Cảm ơn Thầy đã luôn tận tâm dẫn dắt, truyền cảm hứng và định hướng cho chúng em vững bước trưởng thành.",
+            signature: "Học trò của Thầy"
+        };
+
+        const handwritingArea = document.getElementById('handwriting-area');
+        let typingTimer = null;
+
+        function startHandwritingEffect() {
+            if (typingTimer) {
+                clearTimeout(typingTimer);
+                typingTimer = null;
+            }
+
+            handwritingArea.innerHTML = '';
+
+            // Tạo 3 khối cấu trúc rõ ràng để không bao giờ bị vỡ layout
+            const salutationEl = document.createElement('span');
+            salutationEl.className = 'greeting-salutation';
+
+            const bodyEl = document.createElement('span');
+            bodyEl.className = 'message-paragraph';
+
+            const signatureEl = document.createElement('span');
+            signatureEl.className = 'signature-block';
+
+            handwritingArea.appendChild(salutationEl);
+            handwritingArea.appendChild(bodyEl);
+            handwritingArea.appendChild(signatureEl);
+
+            // Xây dựng danh sách từng ký tự theo thứ tự xuất hiện
+            const queue = [];
+            for (const ch of Array.from(cardData.salutation)) {
+                queue.push({ char: ch, target: salutationEl });
+            }
+            for (const ch of Array.from(cardData.body)) {
+                queue.push({ char: ch, target: bodyEl });
+            }
+            for (const ch of Array.from(cardData.signature)) {
+                queue.push({ char: ch, target: signatureEl });
+            }
+
+            let index = 0;
+
+            function typeNextChar() {
+                if (index >= queue.length) {
+                    return;
+                }
+
+                const item = queue[index];
+                const charSpan = document.createElement('span');
+                charSpan.className = 'char-span';
+                charSpan.textContent = item.char;
+
+                item.target.appendChild(charSpan);
+
+                index++;
+
+                // Nhịp độ viết tự nhiên: nghỉ lâu hơn một chút ở dấu phẩy, dấu chấm
+                let delay = 36;
+                if (item.char === ',' || item.char === ';') delay = 180;
+                else if (item.char === '.' || item.char === '!' || item.char === '?') delay = 300;
+                else if (item.char === ' ') delay = 22;
+
+                typingTimer = setTimeout(typeNextChar, delay);
+            }
+
+            typeNextChar();
+        }
+
+        /**
+         * 3. XỬ LÝ TƯƠNG TÁC MỞ THIỆP & MODAL CHỈNH SỬA
+         */
+        const envelopeStage = document.getElementById('envelope-stage');
+        const openEnvelopeBtn = document.getElementById('open-envelope-btn');
+        const cardContainer = document.getElementById('card-container');
+        const replayBtn = document.getElementById('replay-btn');
+        const editBtn = document.getElementById('edit-btn');
+        const editModal = document.getElementById('edit-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const saveModalBtn = document.getElementById('save-modal-btn');
+
+        function openGreetingCard() {
+            envelopeStage.classList.add('hidden-stage');
+            setTimeout(() => {
+                envelopeStage.style.display = 'none';
+                cardContainer.style.display = 'block';
+                // Kích hoạt reflow để transition mượt
+                void cardContainer.offsetWidth;
+                cardContainer.classList.add('visible-card');
+                startHandwritingEffect();
+            }, 450);
+        }
+
+        openEnvelopeBtn.addEventListener('click', openGreetingCard);
+        openEnvelopeBtn.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openGreetingCard();
+            }
+        });
+
+        replayBtn.addEventListener('click', () => {
+            startHandwritingEffect();
+        });
+
+        editBtn.addEventListener('click', () => {
+            document.getElementById('input-salutation').value = cardData.salutation;
+            document.getElementById('input-body').value = cardData.body;
+            document.getElementById('input-signature').value = cardData.signature;
+            editModal.classList.add('open');
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            editModal.classList.remove('open');
+        });
+
+        saveModalBtn.addEventListener('click', () => {
+            const newSalutation = document.getElementById('input-salutation').value.trim();
+            const newBody = document.getElementById('input-body').value.trim();
+            const newSignature = document.getElementById('input-signature').value.trim();
+
+            if (newSalutation) cardData.salutation = newSalutation;
+            if (newBody) cardData.body = newBody;
+            if (newSignature) cardData.signature = newSignature;
+
+            editModal.classList.remove('open');
+            startHandwritingEffect();
+        });
+
+        // Khởi chạy nền khi tải trang xong
+        window.onload = function () {
+            resizeCanvas();
+            animateBackground();
+        };
+    </script>
+</body>
+</html>
