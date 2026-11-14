@@ -89,14 +89,13 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            transition: opacity 0.7s ease, transform 0.7s ease;
+            transition: opacity 0.65s ease, transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .envelope-stage.hidden-stage {
             opacity: 0;
             transform: scale(0.95) translateY(-20px);
             pointer-events: none;
-            position: absolute;
         }
 
         .envelope-box {
@@ -168,12 +167,11 @@
             opacity: 0;
             transform: translateY(25px) scale(0.97);
             pointer-events: none;
-            transition: opacity 0.85s ease, transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+            transition: opacity 0.65s ease, transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
             display: none;
         }
 
         .card-container.visible-card {
-            display: block;
             opacity: 1;
             transform: translateY(0) scale(1);
             pointer-events: auto;
@@ -312,7 +310,7 @@
             color: #fff6d6;
         }
 
-        /* Modal tùy chỉnh lời chúc (nếu người dùng muốn đổi tên thầy / lời chúc) */
+        /* Modal tùy chỉnh lời chúc */
         .modal-backdrop {
             position: fixed;
             inset: 0;
@@ -382,7 +380,7 @@
 
     <main class="main-wrapper">
         
-        <!-- BƯỚC 1: PHONG BÌ NIÊM PHONG CON DẤU VÀNG ĐỒNG -->
+        <!-- BƯỚC 1: PHONG BÌ NIÊM PHONG CON DẤU VÀNG ĐỒNG (TRANG ĐẦU) -->
         <section id="envelope-stage" class="envelope-stage" aria-label="Phong bì thiệp chúc mừng 20-11">
             <p class="subtitle-badge mb-3">Ngày Nhà Giáo Việt Nam 20 • 11</p>
             <h1 class="main-title mb-6 px-2">Tấm Lòng Tri Ân Kính Gửi Thầy</h1>
@@ -474,6 +472,14 @@
                     </svg>
                     <span>Sửa lời chúc</span>
                 </button>
+
+                <button id="close-card-btn" class="gold-btn" type="button" title="Đóng thiệp về trang đầu">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                    </svg>
+                    <span>Đóng thiệp</span>
+                </button>
             </footer>
         </article>
     </main>
@@ -510,7 +516,6 @@
     <script>
         /**
          * 1. HIỆU ỨNG NỀN CANVAS: CHÒM SAO TRI THỨC & BỤI VÀNG LẤP LÁNH
-         * Thay thế hoa rơi bằng mạng lưới ánh sáng vàng kim hình học & các đốm sáng bay lên
          */
         const canvas = document.getElementById('constellation-canvas');
         const ctx = canvas.getContext('2d');
@@ -521,7 +526,7 @@
         let embers = [];
         let pointer = { x: -9999, y: -9999 };
 
-        // Bảng màu vàng kim, đồng ấm áp (tuyệt đối không có xanh dương hay hồng)
+        // Bảng màu vàng kim, đồng ấm áp (không dùng xanh dương hay hồng)
         const goldPalette = [
             'rgba(212, 175, 55, ',   // Gold
             'rgba(243, 229, 171, ',  // Champagne / Parchment gold
@@ -542,7 +547,6 @@
         function initParticles() {
             particles = [];
             embers = [];
-            // Tự động điều chỉnh mật độ hạt theo kích thước màn hình (điện thoại vs máy tính)
             const area = width * height;
             const nodeCount = Math.min(Math.max(Math.floor(area / 22000), 22), 55);
             const emberCount = Math.min(Math.max(Math.floor(area / 18000), 25), 60);
@@ -578,7 +582,7 @@
 
             const connectionDist = width < 600 ? 110 : 155;
 
-            // Vẽ các hạt bụi vàng bay lên nhẹ nhàng (Golden Dust)
+            // Vẽ các hạt bụi vàng bay lên nhẹ nhàng
             for (let i = 0; i < embers.length; i++) {
                 const e = embers[i];
                 e.y += e.vy;
@@ -609,7 +613,6 @@
                 if (p.x < 0 || p.x > width) p.vx *= -1;
                 if (p.y < 0 || p.y > height) p.vy *= -1;
 
-                // Tương tác nhẹ với con trỏ chuột hoặc chạm tay
                 const dxMouse = pointer.x - p.x;
                 const dyMouse = pointer.y - p.y;
                 const distMouse = Math.hypot(dxMouse, dyMouse);
@@ -618,7 +621,6 @@
                     p.y -= dyMouse * 0.008;
                 }
 
-                // Kết nối các điểm gần nhau tạo thành hình học chòm sao
                 for (let j = i + 1; j < particles.length; j++) {
                     const p2 = particles[j];
                     const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
@@ -633,7 +635,6 @@
                     }
                 }
 
-                // Vẽ nút sáng vàng kim
                 const glowAlpha = 0.45 + 0.45 * Math.sin(p.pulse);
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
@@ -661,8 +662,7 @@
         });
 
         /**
-         * 2. HIỆU ỨNG VIẾT TAY TỪNG KÝ TỰ (HANDWRITING CHARACTER REVEAL)
-         * Đảm bảo không cắt chữ, tự động xuống dòng chuẩn xác trên mọi kích thước điện thoại
+         * 2. HIỆU ỨNG VIẾT TAY TỪNG KÝ TỰ
          */
         let cardData = {
             salutation: "Kính gửi Thầy kính mến,",
@@ -673,15 +673,17 @@
         const handwritingArea = document.getElementById('handwriting-area');
         let typingTimer = null;
 
-        function startHandwritingEffect() {
+        function stopHandwritingEffect() {
             if (typingTimer) {
                 clearTimeout(typingTimer);
                 typingTimer = null;
             }
+        }
 
+        function startHandwritingEffect() {
+            stopHandwritingEffect();
             handwritingArea.innerHTML = '';
 
-            // Tạo 3 khối cấu trúc rõ ràng để không bao giờ bị vỡ layout
             const salutationEl = document.createElement('span');
             salutationEl.className = 'greeting-salutation';
 
@@ -695,7 +697,6 @@
             handwritingArea.appendChild(bodyEl);
             handwritingArea.appendChild(signatureEl);
 
-            // Xây dựng danh sách từng ký tự theo thứ tự xuất hiện
             const queue = [];
             for (const ch of Array.from(cardData.salutation)) {
                 queue.push({ char: ch, target: salutationEl });
@@ -711,6 +712,7 @@
 
             function typeNextChar() {
                 if (index >= queue.length) {
+                    typingTimer = null;
                     return;
                 }
 
@@ -720,10 +722,8 @@
                 charSpan.textContent = item.char;
 
                 item.target.appendChild(charSpan);
-
                 index++;
 
-                // Nhịp độ viết tự nhiên: nghỉ lâu hơn một chút ở dấu phẩy, dấu chấm
                 let delay = 36;
                 if (item.char === ',' || item.char === ';') delay = 180;
                 else if (item.char === '.' || item.char === '!' || item.char === '?') delay = 300;
@@ -736,26 +736,50 @@
         }
 
         /**
-         * 3. XỬ LÝ TƯƠNG TÁC MỞ THIỆP & MODAL CHỈNH SỬA
+         * 3. XỬ LÝ TƯƠNG TÁC MỞ THIỆP, ĐÓNG THIỆP VỀ TRANG ĐẦU & CHỈNH SỬA
          */
         const envelopeStage = document.getElementById('envelope-stage');
         const openEnvelopeBtn = document.getElementById('open-envelope-btn');
         const cardContainer = document.getElementById('card-container');
         const replayBtn = document.getElementById('replay-btn');
         const editBtn = document.getElementById('edit-btn');
+        const closeCardBtn = document.getElementById('close-card-btn');
         const editModal = document.getElementById('edit-modal');
         const closeModalBtn = document.getElementById('close-modal-btn');
         const saveModalBtn = document.getElementById('save-modal-btn');
 
+        let isTransitioning = false;
+
         function openGreetingCard() {
+            if (isTransitioning) return;
+            isTransitioning = true;
+
             envelopeStage.classList.add('hidden-stage');
             setTimeout(() => {
                 envelopeStage.style.display = 'none';
                 cardContainer.style.display = 'block';
-                // Kích hoạt reflow để transition mượt
                 void cardContainer.offsetWidth;
                 cardContainer.classList.add('visible-card');
                 startHandwritingEffect();
+                isTransitioning = false;
+            }, 450);
+        }
+
+        function closeGreetingCard() {
+            if (isTransitioning) return;
+            isTransitioning = true;
+
+            stopHandwritingEffect();
+            cardContainer.classList.remove('visible-card');
+
+            setTimeout(() => {
+                cardContainer.style.display = 'none';
+                handwritingArea.innerHTML = '';
+                envelopeStage.style.display = 'flex';
+                void envelopeStage.offsetWidth;
+                envelopeStage.classList.remove('hidden-stage');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                isTransitioning = false;
             }, 450);
         }
 
@@ -766,6 +790,8 @@
                 openGreetingCard();
             }
         });
+
+        closeCardBtn.addEventListener('click', closeGreetingCard);
 
         replayBtn.addEventListener('click', () => {
             startHandwritingEffect();
